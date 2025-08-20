@@ -1,9 +1,9 @@
 <?php
+$addressArr = explode("/", $_SERVER['REQUEST_URI']);
+$pageNum = $addressArr[4];
+$id = $addressArr[5];
 $limit = 5;
-// $result = product::with('category')->pageInit($limit);
-// $result = product::category('title')->pageInit($limit);
-// $result = product::select('product.id', 'product.title', 'product.price', 'product.exist')->coalesce(['category' => 'title'], ['DELETED'])->join('category', 'LEFT')->on('product.categoryId', '=', 'category.id', true)->pageInit($limit);
-$result = product::coalesce(['category' => 'title'], ['DELETED'])->join('category', 'LEFT')->on('product.categoryId', '=', 'category.id', true)->pageInit($limit);
+$products = product::where('categoryId', '=', $id)->category('title')->pageInit($limit);
 ?>
 <h2>Products List</h2>
 <table style="width: 85%;">
@@ -21,7 +21,7 @@ $result = product::coalesce(['category' => 'title'], ['DELETED'])->join('categor
    </thead>
    <tbody>
       <?php
-      while ($proRow = $result->fetch_assoc()) {
+      foreach ($products as $proRow) {
       ?>
          <tr>
             <td><?= $proRow['id']; ?></td>
@@ -39,25 +39,20 @@ $result = product::coalesce(['category' => 'title'], ['DELETED'])->join('categor
    </tbody>
 </table>
 <?php
-$count = product::count()->get()->fetch_assoc()['count(*)'];
+$count = product::count()->where('categoryId', '=', $id)->get()->fetch_assoc()['count(*)'];
 ?>
 <p style="margin-top: 14px; font-weight: bold;">Number of Rows : <?= $count ?></p>
 <?php
-if ($count > $result->num_rows) {
+if ($count > $products->num_rows) {
 ?>
    <div class="page_num_container">
       <?php
       for ($i = 1; $i - 1 < $count / $limit; $i++) {
       ?>
-         <a href="http://localhost/router/product/page/<?= $i; ?>" class="page_num"><?= $i; ?></a>
+         <a href="http://localhost/router/showCategoryProducts/page/<?= $i; ?>/<?= $id ?>" class="page_num"><?= $i; ?></a>
       <?php
       }
       ?>
    </div>
 <?php
 }
-$route = explode('/', $_SERVER['REQUEST_URI']);
-$modelName = $route[2];
-$result = $modelName::fields();
-include 'customShowForm.php';
-include 'searchForm.php';

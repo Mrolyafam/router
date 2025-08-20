@@ -2,7 +2,7 @@
 $address = $_SERVER['REQUEST_URI'];
 $addressArr = explode("/", $address);
 $id = $addressArr[3];
-$foundPro = product::where('product.id', '=', $id)->category(['title'])->get()->fetch_assoc();
+$foundPro = product::where('product.id', '=', $id)->category('title')->get()->fetch_assoc();
 ?>
 <h2>Single Product</h2>
 <table style="width: 85%;">

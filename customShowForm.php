@@ -13,6 +13,6 @@
                <input type="number" name="end" placeholder="end" id="end" min="0">
             </div>
          </div>
-         <button type="submit" name="customShowForm" onclick="formValidation(event,this)">show</button>
+         <button type="submit" onclick="formValidation(event,this)">show</button>
       </fieldset>
    </form>

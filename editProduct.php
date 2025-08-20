@@ -3,7 +3,7 @@ $addressArr = explode("/", $_SERVER['REQUEST_URI']);
 $id = $addressArr[3];
 $result = product::find($id);
 $foundPro = $result->fetch_assoc();
-$catResult = category::select(['id', 'title'])->get();
+$catResult = category::select('id', 'title')->get();
 ?>
 <form class="form pro-form" action="http://localhost/router/updateData/product" method="post" name="myForm">
    <fieldset>

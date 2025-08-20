@@ -5,7 +5,6 @@ function formValidation(ev, el) {
    let forms = el.parentElement.parentElement;
    let formElements = el.parentElement.parentElement.elements;
    let formElementsLength = el.parentElement.parentElement.elements.length;
-   console.log(formElements);
    ev.preventDefault();
    let customHtml = "";
    let hasError = false;

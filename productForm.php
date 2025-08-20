@@ -1,5 +1,5 @@
 <?php
-$result = category::select(['id', 'title'])->get();
+$result = category::select('id', 'title')->get();
 ?>
 <form class="form pro-form" action="http://localhost/router/getData/product" method="post" name="myForm">
    <fieldset>

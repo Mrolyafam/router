@@ -1,6 +1,21 @@
 <?php
+$route = explode('/', $_SERVER['REQUEST_URI']);
 $limit = 5;
-$result = category::withCount('product')->pageInit($limit);
+$pageNum = $route[4];
+if (count($route) > 5) {
+   $showType = $route[5];
+}
+if ($_POST) {
+   $showType = $_POST['type'];
+}
+if ($showType == 'with') {
+   $result = category::withCount('product')->join('product', 'INNER')->on('product.categoryId', '=', 'category.id', true)->group('category', 'id')->pageInit($limit);
+   $count = category::on('product.categoryId', '=', 'category.id', true)->join('product', 'INNER')->group('category', 'id')->get()->num_rows;
+}
+if ($showType == 'without') {
+   $result = category::withCount('product')->having('product_count', '=', 0)->pageInit($limit);
+   $count = category::withCount('product')->having('product_count', '=', 0)->get()->num_rows;
+}
 ?>
 <h2>Categories List</h2>
 <table>
@@ -35,9 +50,6 @@ $result = category::withCount('product')->pageInit($limit);
       ?>
    </tbody>
 </table>
-<?php
-$count = category::count()->get()->fetch_assoc()['count(*)'];
-?>
 <p style="margin-top: 14px; font-weight: bold;">Number of Rows : <?= $count ?></p>
 <?php
 if ($count > $result->num_rows) {
@@ -46,15 +58,14 @@ if ($count > $result->num_rows) {
       <?php
       for ($i = 1; $i - 1 < $count / $limit; $i++) {
       ?>
-         <a href="http://localhost/router/category/page/<?= $i; ?>" class="page_num"><?= $i; ?></a>
+         <a href="http://localhost/router/categoryProducts/page/<?= $i; ?>/<?= $showType ?>" class="page_num"><?= $i; ?></a>
       <?php
       }
       ?>
    </div>
 <?php
 }
-$route = explode('/', $_SERVER['REQUEST_URI']);
-$modelName = $route[2];
+$modelName = 'category';
 $result = $modelName::fields();
 include 'customShowForm.php';
 include 'categorySelectForm.php';

@@ -28,7 +28,7 @@ $foundUser = $result->fetch_assoc();
          <td><?= $foundUser['password']; ?></td>
          <td><?= $foundUser['email']; ?></td>
          <td><?= $foundUser['phoneNumber']; ?></td>
-         <td><a href="http://localhost/router/editUser/<?= $foundUser['id']; ?>">Edit</a></td>
+         <td><a href="http://localhost/router/editUsers/<?= $foundUser['id']; ?>">Edit</a></td>
          <td><a href="http://localhost/router/delete/user/<?= $foundUser['id']; ?>">Delete</a></td>
       </tr>
    </tbody>

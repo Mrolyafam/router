@@ -1,95 +1,99 @@
 <?php
-class model extends mainDb
+class model extends modelFacade
 {
+   protected $table;
+   protected $type;
    private $query;
    private $subQuery;
-   protected $type;
    private $limit;
    private $from;
    private $join;
+   private $group;
+   private $having;
+   private $coalesce;
    private $where = [];
    private $on = [];
-   public static function all()
+   protected function all()
    {
-      $obj = factory::makeObj(static::class);
-      return $obj->select()->get();
+      return $this->select()->get();
    }
-   public static function find($id)
+   protected function find($id)
    {
-      $obj = factory::makeObj(static::class);
-      return $obj->where('id', '=', $id)->get();
+      return $this->where(['id', '=', $id[0]])->get();
    }
-   public static function delete($id)
+   protected function delete($id)
    {
-      $obj = factory::makeObj(static::class);
-      $obj->query = "DELETE ";
-      $obj->type = 'delete';
-      return $obj->from()->where('id', '=', $id)->get();
+      $this->query = "DELETE ";
+      $this->type = 'delete';
+      return $this->from()->where(['id', '=', $id[0]])->get();
    }
-   public static function create($data)
+   protected function create($data)
    {
-      $obj = factory::makeObj(static::class);
-      $table = static::$table;
+      $data = $data[0];
+      $table = $this->table;
       if ($table == 'product' && !isset($data['exist'])) {
          $data['exist'] = 'NOTEXIST';
       }
       $dataKeys = array_keys($data);
-      $obj->query = "INSERT INTO $table (";
+      $this->query = "INSERT INTO $table (";
       foreach ($dataKeys as $index => $key) {
          if ($index == count($dataKeys) - 1) {
-            $obj->query .= $key . ') VALUES (';
+            $this->query .= $key . ') VALUES (';
          } else {
-            $obj->query .= $key . ',';
+            $this->query .= $key . ',';
          }
       }
       $dataValues = array_values($data);
       foreach ($dataValues as $index => $value) {
          if ($index == count($dataValues) - 1) {
-            $obj->query .= "'" . $value . "'" . ')';
+            $this->query .= "'" . $value . "'" . ')';
          } else {
-            $obj->query .= "'" . $value . "'" . ',';
+            $this->query .= "'" . $value . "'" . ',';
          }
       }
-      return $obj->get();
+      return $this->get();
    }
-   public static function update($data)
+   protected function update($data)
    {
-      $obj = factory::makeObj(static::class);
+      $data = $data[0];
       $counter = 0;
       $id = $data['id'];
       unset($data['id']);
-      $table = static::$table;
-      $obj->type = 'update';
+      $table = $this->table;
+      $this->type = 'update';
       if ($table == 'product' && !isset($data['exist'])) {
          $data['exist'] = 'NOTEXIST';
       }
-      $obj->query = "UPDATE $table SET ";
+      $this->query = "UPDATE $table SET ";
       foreach ($data as $key => $value) {
          if ($counter == count($data) - 1) {
-            $obj->query .= $key . '=' . "'" . $value . "'";
+            $this->query .= $key . '=' . "'" . $value . "'";
          } else {
             $counter++;
-            $obj->query .= $key . '=' . "'" . $value . "'" . ",";
+            $this->query .= $key . '=' . "'" . $value . "'" . ",";
          }
       }
-      return $obj->where('id', '=', $id)->get();
+      return $this->where(['id', '=', $id])->get();
    }
-   public static function pageInit($limit)
+   protected function pageInit($limit)
    {
-      $obj = factory::makeObj(static::class);
+      $limit = $limit[0];
       $route = explode('/', $_SERVER['REQUEST_URI']);
       if ($route[3] == 'page') {
          $offset = ($route[4] - 1) * $limit;
-         if (!$obj->type) {
-            $obj->select();
-         } elseif (!in_array($obj->type, ['select'])) {
+         if (!$this->type) {
+            $this->select();
+         } elseif (!in_array($this->type, ['select'])) {
             throw new Exception("pageInit can only be added to SELECT");
          }
-         return $obj->limit($offset, $limit)->get();
+         return $this->limit($offset, $limit)->get();
       }
    }
-   public static function pageInitSearch($resultArr, $pageNum, $limit)
+   protected function pageInitSearch($args)
    {
+      $resultArr = $args[0];
+      $pageNum = $args[1];
+      $limit = $args[2];
       // *الگوریتم استاد
       $offset = ($pageNum - 1) * 5;
       for ($i = $offset; $i < $offset + $limit; $i++) {
@@ -122,13 +126,15 @@ class model extends mainDb
       // }
       // return $newResultArr[$pageNum];
    }
-   public static function customSelect($start, $end)
+   protected function customSelect($args)
    {
-      $select = static::select();
-      if (static::$table == 'product') {
+      $start = $args[0];
+      $end = $args[1];
+      $select = $this->select();
+      if ($this->table == 'product') {
          $select = $select->category(['title']);
       }
-      if (static::$table == 'category') {
+      if ($this->table == 'category') {
          $select = $select->withCount(['product']);
       }
       if ($end > $start) {
@@ -146,113 +152,161 @@ class model extends mainDb
       }
       return $rows;
    }
-   public static function from()
+   protected function from()
    {
-      $table = static::$table;
-      $obj = factory::makeObj(static::class);
-      $obj->from = " FROM $table";
-      return $obj;
+      $table = $this->table;
+      $this->from = " FROM $table";
+      return $this;
    }
-   public static function count()
+   protected function count()
    {
-      $obj = factory::makeObj(static::class);
-      $obj->select(['count(*)']);
-      return $obj;
+      $this->select(['count(*)']);
+      return $this;
    }
-   public static function countSubQuery($className, $tables)
+   protected function countSubQuery($args)
    {
-      $obj = factory::makeObj(static::class);
-      foreach ($tables as $table) {
-         $alias = $table . '_count';
-         $obj->subQuery .= ", (";
-         $obj->subQuery .= $table::count()->where($className . '.' . $obj->related[$className][0], '=', static::class . '.' . $obj->related[$className][1], true)->render();
-         $obj->subQuery .= ") $alias";
+      if (!$this->type) {
+         $this->select([static::class . '.*']);
       }
-      return $obj;
+      $className = $args[0];
+      $tables = $args[1];
+      foreach ($tables as $table) {
+         $subObj = factory::makeObj($table);
+         $alias = $table . '_count';
+         $this->subQuery .= ", (";
+         $this->subQuery .= $subObj->count()->where([$className . '.' . $this->related[$className][0], '=', static::class . '.' . $this->related[$className][1], true])->render();
+         $this->subQuery .= ") $alias";
+      }
+      return $this;
    }
-   public static function select($fields = ['*'])
+   protected function select($fields = ['*'])
    {
-      $obj = factory::makeObj(static::class);
-      $obj->query = "SELECT ";
+      if (empty($fields)) {
+         $fields[] = '*';
+      }
+      $this->query = "SELECT ";
       foreach ($fields as $index => $field) {
          if ($index == count($fields) - 1) {
-            $obj->query .= $field;
+            $this->query .= $field;
          } else {
-            $obj->query .= $field . ',';
+            $this->query .= $field . ',';
          }
       }
-      $obj->from();
-      $obj->type = 'select';
-      return $obj;
+      $this->from();
+      $this->type = 'select';
+      return $this;
    }
-   public static function where($field, $operator, $value, $subquery = false)
+   protected function where($args)
    {
-      $obj = factory::makeObj(static::class);
-      if (!$obj->type) {
-         $obj->select();
-      } elseif (!in_array($obj->type, ['select', 'update', 'delete'])) {
+      $field = $args[0];
+      $operator = $args[1];
+      $value = $args[2];
+      $flag = isset($args[3]) ? $args[3] : false;
+      if (!$this->type) {
+         $this->select([static::class . '.*']);
+      } elseif (!in_array($this->type, ['select', 'update', 'delete'])) {
          throw new Exception("WHERE can only be added to SELECT, UPDATE OR DELETE");
       }
-      if (is_int($value) ||  $subquery) {
-         $obj->where[] = "$field $operator $value ";
+      if (is_int($value) ||  $flag) {
+         $this->where[] = "$field $operator $value ";
       } else {
-         $obj->where[] = "$field $operator '$value' ";
+         $this->where[] = "$field $operator '$value' ";
       }
-      return $obj;
+      return $this;
    }
-   public function on($field, $operator, $value, $subquery = false)
+   protected function on($args)
    {
-      $obj = factory::makeObj(static::class);
-      if (is_int($value) ||  $subquery) {
-         $obj->on[] = "$field $operator $value ";
+      $field = $args[0];
+      $operator = $args[1];
+      $value = $args[2];
+      $flag = isset($args[3]) ? $args[3] : false;
+      if (!$this->type) {
+         $this->select();
+      }
+      if (is_int($value) ||  $flag) {
+         $this->on[] = "$field $operator $value ";
       } else {
-         $obj->on[] = "$field $operator '$value' ";
+         $this->on[] = "$field $operator '$value' ";
       }
-      return $obj;
+      return $this;
    }
-   public static function fields()
+   protected function fields()
    {
-      $table = static::$table;
-      $obj = factory::makeObj(static::class);
-      $obj->query = "DESCRIBE $table";
-      return $obj->get();
+      $table = $this->table;
+      $this->query = "DESCRIBE $table";
+      return $this->get();
    }
-   public static function belongsTo($className, $fields)
+   protected function belongsTo($className, $fields, $joinType)
    {
-      $obj = factory::makeObj(static::class);
-      $obj->select([static::class . '.' . '*']);
+      if (!$this->type) {
+         $this->select([static::class . '.' . '*']);
+      }
       foreach ($fields as $field) {
-         $obj->query .= ',' . $className . '.' . $field;
-         $obj->alias($className . '_' . $field);
+         $this->query .= ',' . $className . '.' . $field;
+         $this->alias([$className . '_' . $field]);
       }
-      $obj->join('LEFT', $className)->on(static::class . '.' . $obj->related[$className][0], '=', $className . '.' . $obj->related[$className][1], true);
-      return $obj;
+      $this->join([$className, $joinType])->on([static::class . '.' . $this->related[$className][0], '=', $className . '.' . $this->related[$className][1], true]);
+      return $this;
    }
-   public static function with($className)
+   protected function with($args)
    {
-      $obj = factory::makeObj(static::class);
+      $className = $args[0];
+      $joinType = isset($args[1]) ? $args[1] : 'LEFT';
       $subObj = factory::makeObj($className);
-      $obj->select([static::class . '.' . '*']);
+      $this->select([static::class . '.' . '*']);
       foreach ($subObj->fillable as $field) {
-         $obj->query .= ',' . $className . '.' . $field;
-         $obj->alias($className . '_' . $field);
+         $this->query .= ',' . $className . '.' . $field;
+         $this->alias([$className . '_' . $field]);
       }
-      $obj->join('LEFT', $className)->on(static::class . '.' . $obj->related[$className][0], '=', $className . '.' . $obj->related[$className][1], true);
-      return $obj;
+      $this->join([$className, $joinType])->on([static::class . '.' . $this->related[$className][0], '=', $className . '.' . $this->related[$className][1], true]);
+      return $this;
    }
-   public function join($joinType, $table)
+   protected function join($args)
    {
-      $obj = factory::makeObj(static::class);
-      $obj->join = ' ' . $joinType . ' JOIN ' . $table;
-      return $obj;
+      $table = $args[0];
+      $joinType = isset($args[1]) ? $args[1] : 'LEFT';
+      $this->join = ' ' . $joinType . ' JOIN ' . $table;
+      return $this;
    }
-   public function alias($alias)
+   protected function alias($args)
    {
-      $obj = factory::makeObj(static::class);
-      $obj->query .= ' ' . $alias;
-      return $obj;
+      $alias = $args[0];
+      $this->query .= ' ' . $alias;
+      return $this;
    }
-   public function limit($offset, $limit)
+   protected function group($args)
+   {
+      $table = $args[0];
+      $field = $args[1];
+      $this->group = 'GROUP BY ' . $table . '.' . $field;
+      return $this;
+   }
+   protected function having($args)
+   {
+      $field = $args[0];
+      $operator = $args[1];
+      $value = $args[2];
+      $this->having = ' HAVING ' . $field . $operator . $value;
+      return $this;
+   }
+   protected function coalesce($args)
+   {
+      if (!$this->type) {
+         $this->select([static::class . '.*']);
+      }
+      $counter = 0;
+      $this->coalesce = ', COALESCE(';
+      foreach ($args[0] as $table => $field) {
+         if ($counter == count($args[0]) - 1) {
+            $this->coalesce .= $table . '.' . $field . ',' . '"' . $args[1][0] . '"' . ') ' . $table . '_' . $field;
+         } else {
+            $this->coalesce .= $table . '.' . $field . ',';
+            $counter++;
+         }
+      }
+      return $this;
+   }
+   protected function limit($offset, $limit)
    {
       if (!in_array($this->type, ['select'])) {
          throw new Exception("LIMIT can only be added to SELECT");
@@ -260,8 +314,12 @@ class model extends mainDb
       $this->limit = " LIMIT " . $offset . "," . $limit;
       return $this;
    }
-   public function render()
+   protected function render()
    {
+      if ($this->coalesce) {
+         $this->query .= $this->coalesce;
+         $this->coalesce = '';
+      }
       if ($this->subQuery) {
          $this->query .= $this->subQuery;
          $this->subQuery = '';
@@ -282,6 +340,14 @@ class model extends mainDb
          $this->query .= " WHERE " . implode(' AND ', $this->where);
          $this->where = [];
       }
+      if ($this->group) {
+         $this->query .= $this->group;
+         $this->group = '';
+      }
+      if ($this->having) {
+         $this->query .= $this->having;
+         $this->having = '';
+      }
       if ($this->limit) {
          $this->query .= $this->limit;
          $this->limit = '';
@@ -293,9 +359,9 @@ class model extends mainDb
       echo '<br>';
       return $query;
    }
-   public function get()
+   protected function get()
    {
-      self::createConn();
-      return self::$connection->query($this->render());
+      $mainDb = factory::makeObj(mainDb::class);
+      return $mainDb::$connection->query($this->render());
    }
 }

@@ -9,6 +9,9 @@ class autoLoad
       if ($class === "factory") {
          $class = "factory/" . $class;
       }
+      if ($class === "modelFacade") {
+         $class = "facade/" . $class;
+      }
       $class .= ".php";
       if (file_exists($class)) {
          include "$class";

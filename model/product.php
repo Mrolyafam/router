@@ -1,20 +1,20 @@
 <?php
 class product extends model
 {
-   protected static $table = "product";
+   protected $table = "product";
    protected $related = ['category' => ['categoryId', 'id']];
    protected $fillable = ['id', 'title', 'price', 'exist', 'categoryId'];
-   public static function category($fields)
+   protected function category($fields)
    {
-      $obj = factory::makeObj(static::class);
-      if (!$obj->type) {
-         $obj->select();
+      if (!$this->type) {
+         $this->select();
       }
-      return self::belongsTo(category::class, $fields);
+      return $this->belongsTo(category::class, $fields, 'LEFT');
    }
-   public static function ascendingPrice($rows)
+   protected function ascendingPrice($rows)
    {
       // *الگوریتم سورت آرایه جدید
+      $rows = $rows[0];
       $newRows = [];
       while (count($rows) > 0) {
          $minPrice = $rows[array_keys($rows)[0]]['price'];
@@ -52,9 +52,10 @@ class product extends model
       // }
       // return $rows;
    }
-   public static function descendingPrice($rows)
+   protected function descendingPrice($rows)
    {
       // *الگوریتم سورت آرایه جدید
+      $rows = $rows[0];
       $newRows = [];
       while (count($rows) > 0) {
          $maxPrice = $rows[array_keys($rows)[0]]['price'];

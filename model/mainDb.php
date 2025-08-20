@@ -1,16 +1,16 @@
 <?php
 class mainDb
 {
-   protected static $table;
-   protected static $connection;
-   private static $server = "localhost";
-   private static $userName = "root";
-   private static $pass = "";
-   private static $dbName = "ecommerce";
-   protected static function createConn()
+   private $server = "localhost";
+   private $userName = "root";
+   private $pass = "";
+   private $dbName = "ecommerce";
+   public static $connection;
+   public function __construct()
    {
       if (!self::$connection) {
-         self::$connection = new mysqli(self::$server, self::$userName, self::$pass, self::$dbName);
+         self::$connection = new mysqli($this->server, $this->userName, $this->pass, $this->dbName);
       }
+      return self::$connection;
    }
 }

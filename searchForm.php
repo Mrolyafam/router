@@ -21,7 +21,7 @@
                <input type="text" name="value" placeholder="value" id="value">
             </div>
          </div>
-         <button type="submit" name="searchForm" onclick="formValidation(event,this)">show</button>
+         <button type="submit" onclick="formValidation(event,this)">show</button>
       </fieldset>
    </form>
    </div>

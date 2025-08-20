@@ -14,7 +14,7 @@ if ($_POST) {
 }
 $result = $table::where($table . '.' . $field, '=', $value);
 if ($table == "product") {
-   $result = $result->category(['title']);
+   $result = $result->category('title');
 }
 $result = $result->pageInit($limit);
 ?>
@@ -40,6 +40,7 @@ $result = $result->pageInit($limit);
          if ($table == "category") {
          ?>
             <th>Product Count</th>
+            <th>Products</th>
          <?php
          }
          ?>
@@ -82,6 +83,13 @@ $result = $result->pageInit($limit);
             <td><a href="http://localhost/router/edit<?= $table; ?>/<?= $row['id']; ?>">Edit</a></td>
             <td><a href="http://localhost/router/delete/<?= $table; ?>/<?= $row['id']; ?>">Delete</a></td>
             <td><a href="http://localhost/router/show<?= $table; ?>/<?= $row['id']; ?>">Show</a></td>
+            <?php
+            if ($table == 'category') {
+            ?>
+               <td><a href="http://localhost/router/showCategoryProducts/page/1/<?= $row['id']; ?>">Products</a></td>
+            <?php
+            }
+            ?>
          </tr>
       <?php
       }
@@ -109,4 +117,7 @@ if ($result->num_rows > $limit) {
 $modelName = $table;
 $result = $modelName::fields();
 include 'customShowForm.php';
+if ($table == 'category') {
+   include 'categorySelectForm.php';
+}
 include 'searchForm.php';
